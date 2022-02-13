@@ -8,7 +8,6 @@ from products.models import Product
 
 
 class Order(models.Model):
-
     order_number = models.CharField(max_length=32, null=False, editable=False)
     full_name = models.CharField(max_length=50, null=False, blank=False)
     email = models.EmailField(max_length=254, null=False, blank=False)
@@ -33,9 +32,9 @@ class Order(models.Model):
     def update_total(self):
         """
         Update grand total each time a line item is added,
-        accounting for delivery costs
+        accounting for delivery costs.
         """
-        self.order_total = self.lineitems.aggregate(Sum('lineitem_total'))['lineitem_total_sum']
+        self.order_total = self.lineitems.aggregate(Sum('lineitem_total'))['lineitem_total__sum']
         if self.order_total < settings.FREE_DELIVERY_THRESHOLD:
             self.delivery_cost = self.order_total * settings.STANDARD_DELIVERY_PERCENTAGE / 100
         else:
@@ -45,12 +44,12 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Override the original save method to se the order number
-        if it hasn't been set already
+        Override the original save method to set the order number
+        if it hasn't been set already.
         """
         if not self.order_number:
             self.order_number = self._generate_order_number()
-        super().save(*args, **Kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.order_number
@@ -65,11 +64,11 @@ class OrderLineItem(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        Override the original save method to se the order number
-        if it hasn't been set already
+        Override the original save method to set the lineitem total
+        and update the order total.
         """
         self.lineitem_total = self.product.price * self.quantity
-        super().save(*args, **Kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'SKU {self.product.sku} on order {self.order.order_number}'
